@@ -1,0 +1,20 @@
+cd /etc/prometheus
+
+nano prometheus.yml 
+
+add new job name:
+
+  - job_name: "node_server"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9100"]
+       # The label name is added as a label `label_name=<label_value>` to any timeseries scraped from this config.
+        labels:
+          app: "prometheus"
+
+
+sudo systemctl stop prometheus
+sudo systemctl start prometheus
