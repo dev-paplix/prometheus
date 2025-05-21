@@ -1,0 +1,13 @@
+sudo groupadd --system prometheus
+sudo useradd -s /sbin/nologin --system -g prometheus prometheus
+mkdir /var/lib/node
+mv node_exporter /var/lib/node/
+nano /etc/systemd/system/node.service
+sudo chown -R prometheus:prometheus /var/lib/node
+sudo chown -R prometheus:prometheus /var/lib/node/*
+sudo chmod -R 775 /var/lib/node
+sudo chmod -R 775 /var/lib/node/*
+systemctl daemon-reload
+systemctl start node
+systemctl enable node
+
