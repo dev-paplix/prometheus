@@ -1,0 +1,166 @@
+services:
+
+  tempo:
+    image: grafana/tempo:latest
+    volumes:
+      - ./shared/tempo:/etc
+      - ./tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+    command: ["-config.file=/etc/tempo.yml"]
+    networks:
+      - prom-network
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./shared/prometheus:/etc/prometheus
+      # - D:\grafana-udemy\docker\prometheus\prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command: 
+      - "--web.enable-remote-write-receiver" 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - prom-network
+  
+  mimir:
+    image: grafana/mimir:latest
+    volumes:
+      - ./shared/mimir:/etc/mimir
+      - ./mimir-data:/var/mimir
+    ports:
+      - "9009:9009"
+    command:
+      - "--config.file=/etc/mimir/config.yaml"
+    depends_on:
+      - prometheus
+    networks:
+      - prom-network
+
+
+  loki:
+    image: grafana/loki:latest
+    volumes:
+      - ./shared/loki/chunks:/loki/chunks/
+      - ./shared/loki/rules:/loki/rules/
+    ports:
+      - "3100:3100"
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
+    networks:
+      - prom-network
+
+  promtail:
+    image: grafana/promtail:latest
+    depends_on:
+      - loki
+    volumes:
+      - ./shared/logs:/var/log
+      - ./shared/promtail:/etc/promtail
+    command:
+      - "-config.file=/etc/promtail/config.yml"
+    networks:
+      - prom-network
+
+  alloy:
+    image: grafana/alloy:latest
+    command: run /etc/alloy/config.alloy --stability.level="public-preview"
+    volumes:
+      - ./shared/alloy:/etc/alloy
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - tempo
+      - loki
+    networks:
+      - prom-network
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./shared/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./shared/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./shared/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_HTTP_TLS_SKIP_VERIFY=true
+    ports:
+      - "3000:3000"
+    networks:
+      - prom-network
+
+  shoehub:
+    image: ariwesi/shoehub:v1
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - LOG_PATH=/app/logs/log.txt
+    volumes:
+    - ./shared/logs/shoehub:/app/logs:rw
+    depends_on:
+      - loki
+      - prometheus
+    networks:
+      - prom-network
+
+  orderservice:
+    image: ariwesi/orderservice:v1
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - paymentservice
+      - alloy
+
+  paymentservice:
+    image: ariwesi/paymentservice:v1
+
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - alloy
+    networks:
+      - prom-network
+
+  stimulator:
+    image: ariwesi/stimulator:v1
+    depends_on:
+      - orderservice
+      - paymentservice
+    networks:
+      - prom-network
+  mysql:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: shoehub
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "3307:3306"
+    networks:
+      - prom-network
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    networks:
+      - prom-network
+      
+volumes:
+  prometheus-data:
+  tempo-data:
+
+networks:
+  prom-network:
+    driver: bridge
