@@ -24,8 +24,8 @@ services:
     command: 
       - "--web.enable-remote-write-receiver" 
       - "--config.file=/etc/prometheus/prometheus.yml"
-    networks:
-      - prom-network
+#    networks:
+   #   - prom-network
   
   mimir:
     image: grafana/mimir:latest
@@ -38,8 +38,8 @@ services:
       - "--config.file=/etc/mimir/config.yaml"
     depends_on:
       - prometheus
-    networks:
-      - prom-network
+ #   networks:
+   #   - prom-network
 
 
   loki:
@@ -51,8 +51,8 @@ services:
       - "3100:3100"
     command:
       - "-config.file=/etc/loki/local-config.yaml"
-    networks:
-      - prom-network
+  #  networks:
+   #   - prom-network
 
   promtail:
     image: grafana/promtail:latest
@@ -63,8 +63,8 @@ services:
       - ./shared/promtail:/etc/promtail
     command:
       - "-config.file=/etc/promtail/config.yml"
-    networks:
-      - prom-network
+  #  networks:
+   #   - prom-network
 
   alloy:
     image: grafana/alloy:latest
@@ -77,8 +77,8 @@ services:
     depends_on:
       - tempo
       - loki
-    networks:
-      - prom-network
+  #  networks:
+   #   - prom-network
 
   grafana:
     image: grafana/grafana:latest
@@ -94,8 +94,8 @@ services:
       - GF_HTTP_TLS_SKIP_VERIFY=true
     ports:
       - "3000:3000"
-    networks:
-      - prom-network
+  #  networks:
+    #  - prom-network
 
   shoehub:
     image: ariwesi/shoehub:v1
@@ -109,8 +109,8 @@ services:
     depends_on:
       - loki
       - prometheus
-    networks:
-      - prom-network
+  #  networks:
+   #   - prom-network
 
   orderservice:
     image: ariwesi/orderservice:v1
@@ -127,16 +127,16 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
     depends_on:
       - alloy
-    networks:
-      - prom-network
+  #  networks:
+     # - prom-network
 
   stimulator:
     image: ariwesi/stimulator:v1
     depends_on:
       - orderservice
       - paymentservice
-    networks:
-      - prom-network
+   # networks:
+   #   - prom-network
   mysql:
     image: mysql:latest
     environment:
@@ -146,8 +146,8 @@ services:
       MYSQL_PASSWORD: root
     ports:
       - "3306:3306"
-    networks:
-      - prom-network
+   # networks:
+     # - prom-network
   phpmyadmin:
     image: phpmyadmin:latest
     environment:
@@ -157,8 +157,8 @@ services:
       PMA_PASSWORD: root
     ports:
       - "8085:80"
-    networks:
-      - prom-network
+  #  networks:
+   #   - prom-network
       
 volumes:
   prometheus-data:
