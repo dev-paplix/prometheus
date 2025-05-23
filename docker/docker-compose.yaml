@@ -83,7 +83,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./shared/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    #  - ./shared/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./shared/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./shared/grafana/dashboards:/var/lib/grafana/dashboards
   #    - ./shared/grafana/etc_data:/etc/grafana
